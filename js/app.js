@@ -701,8 +701,20 @@ function collect(){
 // Puntos por enlace de Google Maps (contando inicio y fin):
 // - computador: el formato /maps/dir/A/B/C/… acepta hasta 25 puntos en un solo enlace
 // - celular: la app de Google Maps solo muestra 10 puntos, por eso se ofrecen tramos de 10
-const MAPS_MAX_PC = 25, MAPS_MAX_PHONE = 10;
-function mapsLinks(points, maxPts = MAPS_MAX_PC){
+const MAPS_MAX_PHONE = 10;
+// paradas por enlace elegidas en Opciones (1 a 50; por defecto 24 = 25 puntos contando la base)
+function maxStops(){
+  const n = Math.round(Number($("#maxStops").value));
+  return Number.isFinite(n) ? Math.min(50, Math.max(1, n)) : 24;
+}
+const maxPc = () => maxStops() + 1;   // puntos por enlace, contando la base
+(function(){
+  const el = $("#maxStops"), v = store.get("pr_maxstops");
+  if (v) el.value = v;
+  el.value = maxStops();
+  el.addEventListener("change", () => { el.value = maxStops(); store.set("pr_maxstops", el.value); });
+})();
+function mapsLinks(points, maxPts = maxPc()){
   const STEP = maxPts - 1, links = [];
   // si el pin se corrigió a mano en el mapa se manda la ubicación exacta; si no, la dirección escrita
   const where = p => p.manual && p.lat != null ? `${p.lat.toFixed(6)},${p.lng.toFixed(6)}` : p.address;
@@ -735,7 +747,7 @@ $("#openNow").onclick = () => {
   const links = mapsLinks(withBase(origin, list, service()));
   window.open(links[0], "_blank", "noopener");
   if (links.length > 1) setTimeout(() => scrollToEl($("#warnBox")), 0);
-  if (links.length > 1) showWarn(`<strong>Ruta en ${links.length} partes</strong>Google Maps acepta hasta ${MAPS_MAX_PC} puntos por enlace. Se abrió la parte 1; abre las demás en orden: ` +
+  if (links.length > 1) showWarn(`<strong>Ruta en ${links.length} partes</strong>Cada enlace lleva hasta ${maxStops()} paradas (puedes subirlo hasta 50 en Opciones). Se abrió la parte 1; abre las demás en orden: ` +
     links.slice(1).map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener">Parte ${i + 2}</a>`).join(" · "));
 };
 
@@ -852,7 +864,7 @@ function renderResult(r, changed){
   } else $("#phoneBox").classList.add("hidden");
 
   $("#linksNote").textContent =
-    (links.length > 1 ? `Google Maps acepta hasta ${MAPS_MAX_PC} puntos por enlace, por eso la ruta se divide en ${links.length} partes. ` : "") +
+    (links.length > 1 ? `Cada enlace lleva hasta ${maxStops()} paradas (puedes subirlo hasta 50 en Opciones), por eso la ruta se divide en ${links.length} partes. ` : "") +
     (r.google ? "" : `Tiempos estimados (${$("#traffic").selectedOptions[0].textContent.toLowerCase()}).`);
   $("#resultActions").classList.remove("hidden");
 

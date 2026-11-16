@@ -10,7 +10,7 @@
   --grad:linear-gradient(135deg,#E2FF5C 0%,#B4EC2E 50%,#6FC21C 100%);
   --warn:#F2C162; --warn-bg:#2B210C; --err:#FF9C94; --err-bg:#331614; --ok:#C6F432; --ok-bg:rgba(198,244,50,.12);
   --apx:#E08A1E;
-  --shadow:0 1px 2px rgba(0,0,0,.6), 0 18px 40px rgba(0,0,0,.5);
+  --shadow:0 1px 2px rgba(0,0,0,.6), 0 6px 14px rgba(0,0,0,.4);
   --radius:20px;
   --font-body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --font-head:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
@@ -20,19 +20,15 @@
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--font-body);font-size:15.5px;line-height:1.5;
-  -webkit-font-smoothing:antialiased;
+  -webkit-font-smoothing:antialiased;background:var(--bg)}
+/* Fondo: una sola capa fija (se pinta una vez y no se recalcula al hacer scroll ni al crecer la lista).
+   Nada de blur, máscaras ni background-attachment:fixed, que ponían lenta la página con muchas paradas. */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
     radial-gradient(1100px 520px at 50% -160px, rgba(198,244,50,.22), transparent 65%),
     radial-gradient(700px 500px at 100% 55%, rgba(111,194,28,.08), transparent 60%),
     radial-gradient(700px 500px at 0% 85%, rgba(198,244,50,.06), transparent 60%),
-    linear-gradient(180deg,#0A0D08 0%,#050605 40%,#020302 100%);
-  background-attachment:fixed}
-/* cuadrícula tenue de fondo */
-body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background-image:linear-gradient(rgba(198,244,50,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(198,244,50,.045) 1px,transparent 1px);
-  background-size:44px 44px;
-  -webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0%,#000 20%,transparent 75%);
-          mask-image:radial-gradient(ellipse 80% 55% at 50% 0%,#000 20%,transparent 75%)}
+    linear-gradient(180deg,#0A0D08 0%,#050605 40%,#020302 100%)}
 h1,h2,h3{font-family:var(--font-head);font-weight:700;margin:0;letter-spacing:.2px}
 h2{font-size:23px}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -71,12 +67,14 @@ header.hero p{margin:0;color:var(--muted);font-size:16px;max-width:52ch}
 
 /* ---------- campos ---------- */
 label.f{display:block;font-weight:600;font-size:12px;color:var(--muted);margin:0 0 6px;text-transform:uppercase;letter-spacing:.6px}
-input[type=text],input[type=password],select,textarea{
+input[type=number]{max-width:140px}
+.opts small{margin-top:6px}
+input[type=text],input[type=number],input[type=password],select,textarea{
   width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--field);
   transition:border-color .12s, box-shadow .12s, background .12s
 }
 input[type=text]:hover,select:hover,textarea:hover{border-color:rgba(198,244,50,.4)}
-input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#0C0F0A;
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#0C0F0A;
   box-shadow:0 0 0 3px rgba(198,244,50,.18)}
 ::placeholder{color:var(--muted);opacity:.75}
 textarea{min-height:110px;resize:vertical}
@@ -104,9 +102,8 @@ button.icon.del:hover{border-color:var(--err);color:var(--err);background:var(--
 
 /* barra de acciones: queda pegada abajo mientras llenas el formulario */
 .actions{position:sticky;bottom:14px;z-index:5;margin-top:4px;padding:10px;border-radius:18px;
-  border:1px solid rgba(198,244,50,.3);background:rgba(8,10,7,.82);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  box-shadow:0 18px 50px rgba(0,0,0,.7),0 0 40px rgba(198,244,50,.08)}
+  border:1px solid rgba(198,244,50,.3);background:#0A0C08;
+  box-shadow:0 8px 20px rgba(0,0,0,.6)}
 .actions #go{flex:1 1 220px;padding:14px 18px;font-size:21px;font-family:var(--font-head);letter-spacing:.6px;text-transform:uppercase}
 .actions #openNow{flex:0 1 auto;padding:14px 18px;border-color:rgba(198,244,50,.4);color:var(--accent)}
 .steps > .note{text-align:center;margin:12px 0 18px}
@@ -134,14 +131,13 @@ button.icon.del:hover{border-color:var(--err);color:var(--err);background:var(--
 
 /* ---------- lista de paradas ---------- */
 .stops{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
-.stop{display:grid;grid-template-columns:28px minmax(0,1.7fr) minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 6px 6px 8px;border-radius:13px;
-  background:var(--field);border:1px solid var(--line)}
-.stop:focus-within{border-color:rgba(198,244,50,.45)}
+.stop{display:grid;grid-template-columns:28px minmax(0,1.7fr) minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px;border-radius:12px;
+  background:var(--field);border:1px solid transparent}
 .stop .n{width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:var(--accent);
   font-family:var(--font-head);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
-.stop input[type=text]{background:transparent;border-color:transparent;padding:8px 10px}
-.stop input[type=text]:hover{border-color:var(--line)}
-.stop input[type=text]:focus{border-color:var(--accent)}
+/* casillas visibles, como antes; sin transiciones para que una lista larga se dibuje al instante */
+.stop input[type=text]{background:var(--panel);padding:7px 9px;border-radius:8px;transition:none}
+.stop button{transition:none}
 .stop .acts{display:flex;gap:4px}
 @media (max-width:520px){
   .stop{grid-template-columns:26px minmax(0,1fr) auto}
@@ -221,7 +217,7 @@ a.btn.alt:hover{background:var(--accent-soft);filter:none}
 dialog.dlg{width:min(420px,calc(100vw - 32px));padding:24px;border:1px solid rgba(198,244,50,.4);border-radius:20px;color:var(--ink);
   background:linear-gradient(160deg,#1B2212 0%,#101310 50%,#080A07 100%);
   box-shadow:0 0 0 1px rgba(0,0,0,.6),0 24px 70px rgba(0,0,0,.75),0 0 70px rgba(198,244,50,.14)}
-dialog.dlg::backdrop{background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+dialog.dlg::backdrop{background:rgba(0,0,0,.78)}
 dialog.dlg[open]{animation:dlgIn .16s ease-out}
 @keyframes dlgIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 .dlg h3{margin:0 0 6px;font-size:26px;line-height:1.15;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
