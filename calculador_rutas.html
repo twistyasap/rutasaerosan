@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planificador de rutas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#070807">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="hero">
+  <div class="hero-in">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/>
+        <path d="M8.5 19H17a3.5 3.5 0 0 0 0-7H7a3.5 3.5 0 0 1 0-7h8.5"/>
+      </svg>
+    </span>
+    <h1>Planificador <em>de rutas</em></h1>
+    <p>Ingresa las direcciones, ordena el recorrido y ábrelo en Google Maps.</p>
+    <span class="engine" id="engine"></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="layout">
+    <!-- datos -->
+    <div class="steps">
+      <section class="panel">
+        <h2>Servicio</h2>
+        <div class="svc" role="radiogroup" aria-label="Tipo de servicio">
+          <label><input type="radio" name="svc" value="recogida" checked>
+            <span><b>Recogida</b><small>Paradas → Base. Parte por la más lejana y termina en la base.</small></span></label>
+          <label><input type="radio" name="svc" value="zarpe">
+            <span><b>Zarpe</b><small>Base → Paradas. Sale de la base y termina en la más lejana.</small></span></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Base <span class="baseRole" id="baseRole"></span></h2>
+        <div class="row2">
+          <div><label class="f" for="o-dir">Dirección</label>
+            <input id="o-dir" type="text" value="Osvaldo Croquevielle Cardemil 2207"></div>
+          <div><label class="f" for="o-com">Comuna</label>
+            <input id="o-com" type="text" list="comunas" value="Pudahuel"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Paradas</h2>
+        <label class="f" for="paste">Pega aquí desde Excel (dirección y comuna)</label>
+        <textarea id="paste" placeholder="Copia las celdas en Excel y pégalas aquí con Ctrl+V. Se agregan solas al final de la lista, sin borrar las que ya tienes."></textarea>
+        <label class="bar check">
+          <input type="checkbox" id="firstIsOrigin"> La primera fila es la base
+        </label>
+        <div class="bar mt-8">
+          <button id="pasteAppend" class="primary">Agregar a la lista</button>
+          <button id="pasteReplace" class="ghost">Reemplazar lista</button>
+          <button id="clearStops" class="ghost">Vaciar todo</button>
+        </div>
+        <p class="note" id="pasteInfo"></p>
+        <details open>
+          <summary>Lista cargada (editable)</summary>
+          <div id="stops" class="stops mt-10"></div>
+          <button id="addStop" class="ghost">+ Agregar parada</button>
+        </details>
+      </section>
+
+      <section class="panel">
+        <h2>Opciones</h2>
+        <div class="opts">
+          <label class="radio"><input type="radio" name="mode" value="opt" checked>
+            <span>Ruta más eficiente (recomendado)
+              <small>Ordena las paradas por el camino más corto y siempre avanzando hacia el destino, sin ir y volver. Sin límite de paradas.</small></span></label>
+          <label class="radio"><input type="radio" name="mode" value="asis">
+            <span>Respetar el orden de mi lista</span></label>
+          <div id="trafficBox">
+            <label class="f" for="traffic">Tiempos de manejo</label>
+            <select id="traffic">
+              <option value="1.3">Con tráfico normal</option>
+              <option value="1.7">Con tráfico de hora punta</option>
+              <option value="1">Sin tráfico</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <div class="bar actions">
+        <button id="go" class="primary">Calcular ruta</button>
+        <button id="openNow" class="ghost">Abrir en Google Maps</button>
+      </div>
+      <p class="note">«Abrir en Google Maps» usa el orden de la lista tal como está. «Calcular ruta» ordena las paradas, calcula km y tiempos, y deja el enlace listo para Google Maps.</p>
+    </div>
+
+    <!-- avisos y resultado (aparece debajo al calcular) -->
+    <div>
+      <div id="errBox" class="msg err hidden" role="alert"></div>
+      <div id="warnBox" class="msg warn hidden"></div>
+
+      <section id="results" class="panel results hidden">
+        <h2>Recorrido</h2>
+        <div id="summary" class="summary hidden">
+          <div><div class="big" id="sKm">—</div><div class="lbl">distancia total</div></div>
+          <div><div class="big" id="sTime">—</div><div class="lbl">tiempo de manejo</div></div>
+          <div><div class="big" id="sStops">—</div><div class="lbl">paradas</div></div>
+        </div>
+        <div id="resultActions" class="hidden">
+          <div class="links" id="mapLinks"></div>
+          <div id="phoneBox" class="phone hidden">
+            <span class="phoneLbl">En el celular la app de Google Maps muestra máximo 10 puntos. Abre estos tramos en orden:</span>
+            <div class="links" id="phoneLinks"></div>
+          </div>
+          <div class="bar mt-10">
+            <button id="copyRoute" class="ghost">Copiar ruta</button>
+            <button id="dlCsv" class="ghost">Descargar CSV</button>
+          </div>
+          <p class="note" id="linksNote"></p>
+        </div>
+        <p class="note hidden" id="orderNote"></p>
+        <ol id="routeList" class="route"></ol>
+      </section>
+    </div>
+  </div>
+</div>
+
+<datalist id="comunas"></datalist>
+
+<dialog id="dlg" class="dlg" aria-labelledby="dlgTitle">
+  <h3 id="dlgTitle"></h3>
+  <p id="dlgMsg"></p>
+  <div class="dlg-acts">
+    <button id="dlgCancel" class="ghost">Cancelar</button>
+    <button id="dlgOk" class="primary">Aceptar</button>
+  </div>
+</dialog>
+
+<script src="js/app.js"></script>
+</body>
+</html>
