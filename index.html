@@ -85,6 +85,11 @@
               <option value="1">Sin tráfico</option>
             </select>
           </div>
+          <div>
+            <label class="f" for="maxStops">Paradas por enlace de Google Maps (máx. 50)</label>
+            <input id="maxStops" type="number" min="1" max="50" step="1" value="24" inputmode="numeric">
+            <small>Si tu ruta tiene más paradas que este número, se divide en varios enlaces. Google Maps suele aceptar hasta 24 paradas más la base; con más puede cortar la ruta o no cargarla. Si te pasa, vuelve a 24.</small>
+          </div>
         </div>
       </section>
 
